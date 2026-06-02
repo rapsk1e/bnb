@@ -21,26 +21,30 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1. KONFIGURASI FORMASI, KOMPATIBILITAS & KOORDINAT LAPANGAN
+# 1. KONFIGURASI FORMASI, KOMPATIBILITAS & KOORDINAT LAPANGAN (UPDATED)
 # ==============================================================================
 
 # Definisikan Formasi Utama (Total Kuota per Formasi Selalu Tepat 11 Slot)
 FORMASI_TERSEDIA: Dict[str, Dict[str, int]] = {
     "4-3-3": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 1, "CM": 2, "LW": 1, "RW": 1, "ST": 1},
     "4-4-2": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 1, "CM": 3, "ST": 2},
-    "4-2-3-1": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 2, "CAM": 2, "LW": 1, "ST": 1},
-    "3-5-2": {"GK": 1, "CB": 3, "CDM": 1, "CM": 2, "CAM": 1, "RB": 1, "ST": 2},
+    # 4-2-3-1: 1 GK, 4 Bek (LB, 2 CB, RB), 2 Midfield (CDM), 1 CAM, 1 LM, 1 RM, 1 ST = 11 Slot
+    "4-2-3-1": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 2, "CAM": 1, "LM": 1, "RM": 1, "ST": 1},
+    # 3-5-2: 1 GK, 3 CB, 1 CDM, 3 CM, 1 CAM, 2 ST = 11 Slot (Sesuai modifikasi data sentral Anda)
+    "3-5-2": {"GK": 1, "CB": 3, "CDM": 1, "CM": 3, "CAM": 1, "ST": 2},
 }
 
 # Aturan Kompatibilitas Posisi Alternatif beserta Penalti Ratingnya
 ATURAN_KOMPATIBILITAS: Dict[str, List[Tuple[str, int]]] = {
     "GK": [("GK", 0)],
     "CB": [("CB", 0)],
-    "LB": [("LB", 0), ("RB", -5)],
-    "RB": [("RB", 0), ("LB", -5)],
+    "LB": [("LB", 0), ("RB", -5), ("LWB", 0)],
+    "RB": [("RB", 0), ("LB", -5), ("RWB", 0)],
     "CDM": [("CDM", 0), ("CM", 0)],
     "CM": [("CM", 0), ("CDM", 0), ("CAM", 0)],
     "CAM": [("CAM", 0), ("CM", 0), ("ST", -10)],
+    "LM": [("LM", 0), ("LW", -3), ("LB", -5)],  # Kompatibilitas Gelandang Kiri
+    "RM": [("RM", 0), ("RW", -3), ("RB", -5)],  # Kompatibilitas Gelandang Kanan
     "LW": [("LW", 0), ("RW", -5)],
     "RW": [("RW", 0), ("LW", -5)],
     "ST": [("ST", 0)]
@@ -49,46 +53,33 @@ ATURAN_KOMPATIBILITAS: Dict[str, List[Tuple[str, int]]] = {
 # Koordinat Spasial Unik Lapangan (X: 0-100, Y: 0-100) untuk Mencegah Pemain Bertumpuk
 FORMASI_POSISI: Dict[str, Dict[str, List[Tuple[float, float]]]] = {
     "4-3-3": {
-        "GK": [(50.0, 8.0)],
-        "LB": [(15.0, 26.0)],
-        "CB": [(38.0, 23.0), (62.0, 23.0)],
-        "RB": [(85.0, 26.0)],
-        "CDM": [(50.0, 42.0)],
-        "CM": [(33.0, 56.0), (67.0, 56.0)],
-        "LW": [(20.0, 80.0)],
-        "RW": [(80.0, 80.0)],
-        "ST": [(50.0, 88.0)]
+        "GK": [(50.0, 8.0)], "LB": [(15.0, 26.0)], "CB": [(38.0, 23.0), (62.0, 23.0)], "RB": [(85.0, 26.0)],
+        "CDM": [(50.0, 42.0)], "CM": [(33.0, 56.0), (67.0, 56.0)], "LW": [(20.0, 80.0)], "RW": [(80.0, 80.0)], "ST": [(50.0, 88.0)]
     },
     "4-4-2": {
-        "GK": [(50.0, 8.0)],
-        "LB": [(15.0, 26.0)],
-        "CB": [(38.0, 23.0), (62.0, 23.0)],
-        "RB": [(85.0, 26.0)],
-        "CM": [(25.0, 54.0), (50.0, 58.0), (75.0, 54.0)],
-        "CDM": [(50.0, 40.0)],
-        "ST": [(35.0, 86.0), (65.0, 86.0)]
+        "GK": [(50.0, 8.0)], "LB": [(15.0, 26.0)], "CB": [(38.0, 23.0), (62.0, 23.0)], "RB": [(85.0, 26.0)],
+        "CM": [(25.0, 54.0), (50.0, 58.0), (75.0, 54.0)], "CDM": [(50.0, 40.0)], "ST": [(35.0, 86.0), (65.0, 86.0)]
     },
     "4-2-3-1": {
         "GK": [(50.0, 8.0)],
         "LB": [(15.0, 26.0)],
         "CB": [(38.0, 23.0), (62.0, 23.0)],
         "RB": [(85.0, 26.0)],
-        "CDM": [(35.0, 44.0), (65.0, 44.0)],
-        "CAM": [(35.0, 66.0), (65.0, 66.0)],
-        "LW": [(18.0, 80.0)],
-        "ST": [(50.0, 88.0)]
+        "CDM": [(35.0, 44.0), (65.0, 44.0)], # 2 Midfield (CDM)
+        "CAM": [(50.0, 68.0)],               # 1 CAM
+        "LM": [(18.0, 68.0)],                # 1 LM
+        "RM": [(82.0, 68.0)],                # 1 RM
+        "ST": [(50.0, 88.0)]                 # 1 ST
     },
     "3-5-2": {
         "GK": [(50.0, 8.0)],
-        "CB": [(25.0, 23.0), (50.0, 23.0), (75.0, 23.0)],
-        "CDM": [(50.0, 42.0)],
-        "CM": [(30.0, 58.0), (70.0, 58.0)],
-        "CAM": [(50.0, 68.0)],
-        "RB": [(85.0, 48.0)],
-        "ST": [(35.0, 88.0), (65.0, 88.0)]
+        "CB": [(25.0, 23.0), (50.0, 23.0), (75.0, 23.0)], # 3 CB
+        "CDM": [(50.0, 42.0)],                             # 1 CDM
+        "CM": [(25.0, 58.0), (50.0, 58.0), (75.0, 58.0)], # 3 CM (Kiri, Tengah, Kanan)
+        "CAM": [(50.0, 72.0)],                             # 1 CAM
+        "ST": [(35.0, 88.0), (65.0, 88.0)]                 # 2 ST
     }
 }
-
 
 # ==============================================================================
 # 2. STRUKTUR DATA & ENGINE DATA PRE-PROCESSING
@@ -331,7 +322,8 @@ def gambar_stadium_formasi(best_lineup: List[Dict], nama_formasi: str):
     skema_warna: Dict[str, str] = {
         "GK": "#38bdf8", "LB": "#fb7185", "CB": "#60a5fa", "RB": "#c084fc",
         "CDM": "#f59e0b", "CM": "#4ade80", "CAM": "#a3e635", "LW": "#f43f5e",
-        "RW": "#e2e8f0", "ST": "#f43f5e"
+        "RW": "#e2e8f0", "ST": "#f43f5e",
+        "LM": "#f43f5e", "RM": "#e2e8f0"  # Menambahkan skema warna untuk LM dan RM
     }
     
     peta_koordinat = FORMASI_POSISI[nama_formasi]
