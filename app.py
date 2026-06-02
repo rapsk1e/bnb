@@ -375,70 +375,109 @@ st.markdown("Aplikasi penentu skuad sepak bola terbaik berbasis kecerdasan kompu
 
 # Panel Sidebar Input Kontrol Konten
 st.sidebar.header("⚙️ Parameter Sistem")
-formasi_terpilih = st.sidebar.selectbox("Pilih Pola Formasi Taktis:", list(FORMASI_TERSEDIA.keys()))
+formasi_terpilih = st.sidebar.selectbox("Pilih Pola Formasi Taktis Utama:", list(FORMASI_TERSEDIA.keys()))
 
 uploaded_file = st.file_uploader("Unggah File Dataset Pemain (.CSV):", type=["csv"])
 
 if uploaded_file:
     df_pemain = pd.read_csv(uploaded_file)
     
-    # 1. Bangun Slot & Hitung Batas Min/Max Budget Terlebih Dahulu
+    # --------------------------------------------------------------------------
+    # FITUR ANALISIS KELAYAKAN FINANSIAL & KUOTA SEMUA FORMASI
+    # --------------------------------------------------------------------------
+    st.subheader("📊 Analisis Kelayakan & Rentang Budget Dataset Semesta Formasi")
+    
+    ringkasan_formasi = []
+    for f_nama, f_obj in FORMASI_TERSEDIA.items():
+        slots_temp = bangun_kandidat_per_slot(df_pemain, f_obj)
+        
+        # Validasi kecukupan pemain di dataset
+        is_aman = True
+        for pos_req, kuota in f_obj.items():
+            pos_alternatif = [p_asli for p_asli, _ in ATURAN_KOMPATIBILITAS.get(pos_req, [(pos_req, 0)])]
+            tersedia = df_pemain[df_pemain["Position"].isin(pos_alternatif)].shape[0]
+            if tersedia < kuota:
+                is_aman = False
+                break
+                
+        if is_aman and len(slots_temp) == 11:
+            min_b, max_b = hitung_estimasi_range_budget(slots_temp)
+            status_pemain = "✅ Cukup Pemain"
+        else:
+            min_b, max_b = 0.0, 0.0
+            status_pemain = "❌ Kurang Pemain"
+            
+        ringkasan_formasi.append({
+            "Formasi": f_nama,
+            "Min Budget (Juta EUR)": round(min_b / 1_000_000, 2) if min_b > 0 else "N/A",
+            "Max Budget (Juta EUR)": round(max_b / 1_000_000, 2) if max_b > 0 else "N/A",
+            "Ketersediaan Skuad": status_pemain,
+            "Kelayakan B&B": "🚀 Siap Dioptimasi" if is_aman else "🛑 Data Tidak Mendukung"
+        })
+        
+    df_ringkasan = pd.DataFrame(ringkasan_formasi)
+    st.dataframe(df_ringkasan, use_container_width=True, hide_index=True)
+    st.caption("ℹ️ *Min Budget menunjukkan ongkos minimum membangun tim isi 11 pemain unik yang valid, sedangkan Max Budget adalah total harga jika Anda memborong semua opsi pemain termahal.*")
+    
+    # --- Kembali ke Inisialisasi Formasi Aktif Pilihan User ---
     formasi_obj = FORMASI_TERSEDIA[formasi_terpilih]
     slots_kandidat = bangun_kandidat_per_slot(df_pemain, formasi_obj)
     
-    # Validasi Dasar Struktur Baris Slot
+    # Ambil batas min/max khusus untuk formasi aktif di sidebar
     if len(slots_kandidat) == 11:
         min_budget_eur, max_budget_eur = hitung_estimasi_range_budget(slots_kandidat)
         min_budget_juta = min_budget_eur / 1_000_000
         max_budget_juta = max_budget_eur / 1_000_000
         
-        # 2. Tampilkan Info Range Budget di Sidebar sebagai Panduan User
         st.sidebar.info(
-            f"📊 **Range Budget Dataset ({formasi_terpilih}):**\n"
-            f"- 🛑 **Min Budget:** €{min_budget_juta:.2f} M *(Kombinasi Skuad Termurah)*\n"
-            f"- 🚀 **Max Budget:** €{max_budget_juta:.2f} M *(Kombinasi Skuad Termahal)*"
+            f"🎯 **Formasi Aktif: {formasi_terpilih}**\n"
+            f"- 🛑 Min Budget: €{min_budget_juta:.2f} M\n"
+            f"- 🚀 Max Budget: €{max_budget_juta:.2f} M"
         )
     else:
-        min_budget_juta = 10.0
-        max_budget_juta = 1000.0
+        min_budget_juta = 1.0
+        max_budget_juta = 2000.0
 
     # Input Budget Aktual dari User
     budget_input_juta = st.sidebar.number_input(
-        "Batas Maksimal Anggaran Budget (Juta EUR):", 
+        "Batas Maksimal Anggaran Budget Anda (Juta EUR):", 
         min_value=1.0, 
         max_value=5000.0, 
-        value=max(min_budget_juta, 150.0), # Default diarahkan ke nilai realistis atau minimalnya
+        value=max(min_budget_juta, 150.0),
         step=10.0
     )
     budget_aktual_eur = budget_input_juta * 1_000_000
 
-    # Layout Utama
-    col_preview, col_config_check = st.columns([2, 1])
+    # Layout Utama Tampilan Pratinjau Data Mentah & Status Posisi Formasi Terpilih
+    st.markdown("---")
+    col_preview, col_config_check = st.columns([1.8, 1.2])
     with col_preview:
-        st.subheader("📋 Data Mentah Pemain (Sampel Dataset)")
-        st.dataframe(df_pemain.head(8), use_container_width=True)
+        st.subheader("📋 Sampel Dataset Pemain")
+        st.dataframe(df_pemain.head(6), use_container_width=True)
         
     with col_config_check:
-        st.subheader("🔍 Validasi Ketersediaan Posisi")
+        st.subheader(f"🔍 Status Kompatibilitas Formasi {formasi_terpilih}")
         is_data_aman = True
         status_list = []
         for pos_req, kuota in formasi_obj.items():
             pos_alternatif = [p_asli for p_asli, _ in ATURAN_KOMPATIBILITAS.get(pos_req, [(pos_req, 0)])]
             tersedia_di_csv = df_pemain[df_pemain["Position"].isin(pos_alternatif)].shape[0]
             if tersedia_di_csv < kuota:
-                status_list.append(f"❌ **{pos_req}**: Butuh {kuota}, hanya ada {tersedia_di_csv} di CSV.")
+                status_list.append(f"❌ **{pos_req}**: Butuh {kuota}, hanya ada {tersedia_di_csv}")
                 is_data_aman = False
             else:
-                status_list.append(f"✅ **{pos_req}**: Terpenuhi ({tersedia_di_csv} tersedia).")
+                status_list.append(f"✅ **{pos_req}**: Terpenuhi ({tersedia_di_csv} pemain)")
                 
         st.markdown("\n".join(status_list))
         
     if not is_data_aman:
-        st.error("Gagal Melanjutkan: Dataset Anda kekurangan pemain spesifik posisi untuk membentuk formasi ini.")
+        st.error(f"Gagal Melanjutkan: Dataset Anda tidak memiliki cukup pemain untuk formasi {formasi_terpilih}.")
     else:
-        # Validasi Input Budget terhadap Batas Minimum Teoretis Dataset
+        # Peringatan Validasi Interaktif Budget Input
         if budget_input_juta < min_budget_juta:
-            st.warning(f"⚠️ Budget Anda (€{budget_input_juta:.2f}M) berada di bawah ambang batas minimum teoretis (€{min_budget_juta:.2f}M). Kemungkinan besar solusi tidak akan ditemukan.")
+            st.warning(f"⚠️ Budget Anda (€{budget_input_juta:.2f}M) di bawah batas minimum teoretis (€{min_budget_juta:.2f}M) untuk formasi ini. Branch & Bound dipastikan mengembalikan hasil nihil (solusi tidak ketemu).")
+        elif budget_input_juta >= max_budget_juta:
+            st.success(f"⚡ Budget Anda (€{budget_input_juta:.2f}M) melampaui harga skuad termahal (€{max_budget_juta:.2f}M). Algoritma akan otomatis mengambil sebelas bintang dengan rating tertinggi tanpa batasan dana!")
 
         if st.button("🚀 Jalankan Optimasi Pencarian Starting XI Terbaik"):
             with st.spinner("Algoritma sedang mengeksplorasi pohon ruang status (Branch and Bound)..."):
@@ -447,9 +486,9 @@ if uploaded_file:
             if "error" in stats:
                 st.error(stats["error"])
             elif not lineup_final:
-                st.error(f"Solusi Tidak Ditemukan! Budget €{budget_input_juta:.2f}M terlalu rendah untuk membeli kombinasi 11 pemain unik yang valid.")
+                st.error(f"Solusi Tidak Ditemukan! Batas Anggaran €{budget_input_juta:.2f}M terlalu rendah untuk membeli kombinasi 11 pemain unik yang valid.")
             else:
-                st.success("Solusi Optimal Berhasil Ditemukan!")
+                st.success("Solusi Optimal Berhasil Diekstrak!")
                 
                 df_lineup = pd.DataFrame(lineup_final)
                 df_lineup["Harga (Juta EUR)"] = df_lineup["Harga EUR"] / 1_000_000
@@ -467,7 +506,6 @@ if uploaded_file:
                 with col_tabel:
                     st.subheader("📋 Daftar Sebelas Pemain Utama")
                     st.dataframe(df_lineup_display, use_container_width=True, height=440)
-                    
                     st.subheader("📊 Statistik Kinerja Pemangkasan Node")
                     st.json(stats)
                     
