@@ -33,7 +33,6 @@ FORMASI_TERSEDIA: Dict[str, Dict[str, int]] = {
 }
 
 # Aturan Kompatibilitas Posisi Alternatif beserta Penalti Ratingnya
-# Format: Taktis_Slot -> List Tuple (Posisi_Asli_Dataset, Penalti_Rating)
 ATURAN_KOMPATIBILITAS: Dict[str, List[Tuple[str, int]]] = {
     "GK": [("GK", 0)],
     "CB": [("CB", 0)],
@@ -54,7 +53,6 @@ FORMASI_POSISI: Dict[str, Dict[str, List[Tuple[float, float]]]] = {
         "LB": [(15.0, 26.0)],
         "CB": [(38.0, 23.0), (62.0, 23.0)],
         "RB": [(85.0, 26.0)],
-        "txt_offset": [(50, 10)], 
         "CDM": [(50.0, 42.0)],
         "CM": [(33.0, 56.0), (67.0, 56.0)],
         "LW": [(20.0, 80.0)],
@@ -67,7 +65,6 @@ FORMASI_POSISI: Dict[str, Dict[str, List[Tuple[float, float]]]] = {
         "CB": [(38.0, 23.0), (62.0, 23.0)],
         "RB": [(85.0, 26.0)],
         "CM": [(25.0, 54.0), (50.0, 58.0), (75.0, 54.0)],
-        "txt_offset": [(50, 10)], 
         "CDM": [(50.0, 40.0)],
         "ST": [(35.0, 86.0), (65.0, 86.0)]
     },
@@ -105,17 +102,8 @@ class KandidatPemain:
     harga: float
 
 def bangun_kandidat_per_slot(df: pd.DataFrame, formasi: Dict[str, int]) -> List[Tuple[str, List[KandidatPemain]]]:
-    """
-    Membangun daftar kandidat pemain per slot taktis lengkap dengan kalkulasi rating efektif.
-    """
     slots_kandidat = []
     
-    # Validasi dasar kolom dataset
-    kolom_wajib = {"Name", "Position", "Overall", "Value_EUR"}
-    if not kolom_wajib.issubset(df.columns):
-        st.error(f"Dataset harus memiliki kolom-kolom berikut: {kolom_wajib}")
-        return []
-
     for posisi_taktis, jumlah_slot in formasi.items():
         aturan_pos = ATURAN_KOMPATIBILITAS.get(posisi_taktis, [(posisi_taktis, 0)])
         list_pemain_kompatibel = []
@@ -133,14 +121,49 @@ def bangun_kandidat_per_slot(df: pd.DataFrame, formasi: Dict[str, int]) -> List[
                     )
                 )
         
-        # Urutkan berdasarkan rating efektif terbaik untuk optimasi bounding
         list_pemain_kompatibel.sort(key=lambda x: x.rating_efektif, reverse=True)
         
-        # Setiap slot taktis direplikasi secara independen sesuai kuota formasi
         for _ in range(jumlah_slot):
             slots_kandidat.append((posisi_taktis, list_pemain_kompatibel))
             
     return slots_kandidat
+
+def hitung_estimasi_range_budget(slots: List[Tuple[str, List[KandidatPemain]]]) -> Tuple[float, float]:
+    """
+    Menghitung perkiraan kasar budget minimum dan maksimum berdasarkan ketersediaan pemain unik.
+    """
+    min_total = 0.0
+    max_total = 0.0
+    set_terpakai_min = set()
+    set_terpakai_max = set()
+    
+    # Hitung Minimum Budget (mengambil pemain termurah yang unik)
+    for _, kandidat_list in slots:
+        kandidat_urut_murah = sorted(kandidat_list, key=lambda x: x.harga)
+        terpilih = False
+        for p in kandidat_urut_murah:
+            if p.nama not in set_terpakai_min:
+                min_total += p.harga
+                set_terpakai_min.add(p.nama)
+                terpilih = True
+                break
+        if not terpilih and kandidat_list:  # Fallback jika keunikan habis
+            min_total += kandidat_list[-1].harga
+
+    # Hitung Maksimum Budget (mengambil pemain termahal yang unik)
+    for _, kandidat_list in slots:
+        kandidat_urut_mahal = sorted(kandidat_list, key=lambda x: x.harga, reverse=True)
+        terpilih = False
+        for p in kandidat_urut_mahal:
+            if p.nama not in set_terpakai_max:
+                max_total += p.harga
+                set_terpakai_max.add(p.nama)
+                terpilih = True
+                break
+        if not terpilih and kandidat_list:
+            max_total += kandidat_list[0].harga
+            
+    return min_total, max_total
 
 
 # ==============================================================================
@@ -149,7 +172,7 @@ def bangun_kandidat_per_slot(df: pd.DataFrame, formasi: Dict[str, int]) -> List[
 
 @dataclass(order=True)
 class NodeBB:
-    neg_ub: float  # Digunakan sebagai prioritas di Max-Heap (Heapq secara default Min-Heap)
+    neg_ub: float
     level: int = field(compare=False)
     rating_akumulasi: int = field(compare=False)
     budget_sisa: float = field(compare=False)
@@ -159,9 +182,6 @@ class NodeBB:
 def hitung_upper_bound(level: int, rating_kini: int, sisa_budget: float, 
                        slots: List[Tuple[str, List[KandidatPemain]]], 
                        set_terpakai: frozenset) -> float:
-    """
-    Menghitung batas atas rating menggunakan pendekatan Relaksasi Pecahan Knapsack (Fractional Upper Bound).
-    """
     ub = float(rating_kini)
     budget_temp = sisa_budget
     
@@ -169,39 +189,26 @@ def hitung_upper_bound(level: int, rating_kini: int, sisa_budget: float,
         _, kandidat_list = slots[i]
         pemain_terpilih = None
         
-        # Cari pemain terbaik yang belum digunakan pada silsilah node ini
         for p in kandidat_list:
             if p.nama not in set_terpakai:
                 pemain_terpilih = p
                 break
                 
         if not pemain_terpilih:
-            return float('-inf')  # Invalid branch, tidak cukup pemain unik tersedia
+            return float('-inf')
             
         if pemain_terpilih.harga <= budget_temp:
             ub += pemain_terpilih.rating_efektif
             budget_temp -= pemain_terpilih.harga
         else:
             if pemain_terpilih.harga > 0:
-                # Ambil nilai fraksional dari rating pemain jika budget tersisa tidak mencukupi sepenuhnya
                 ub += pemain_terpilih.rating_efektif * (budget_temp / pemain_terpilih.harga)
             break
             
     return ub
 
-def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: float) -> Tuple[int, List[Dict], Dict]:
-    """
-    Eksekusi Algoritma Branch and Bound untuk Pencarian Komposisi Pemain Optimal.
-    """
-    formasi = FORMASI_TERSEDIA[nama_formasi]
-    slots = bangun_kandidat_per_slot(df, formasi)
+def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_total: float) -> Tuple[int, List[Dict], Dict]:
     n_slots = len(slots)
-    
-    # Validasi Awal: Memastikan jumlah slot tepat 11 pemain
-    if n_slots != 11:
-        return 0, [], {"error": "Konfigurasi slot formasi tidak valid (Harus 11)."}
-        
-    # State Variabel Tracker
     best_rating = -1
     best_lineup: List[Dict] = []
     
@@ -209,10 +216,9 @@ def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: floa
     nodes_pruned = 0
     waktu_mulai = time.time()
     
-    # Hitung Bounding awal root node
     ub_root = hitung_upper_bound(0, 0, budget_total, slots, frozenset())
     if ub_root == float('-inf'):
-        return 0, [], {"error": "Jumlah skuad dalam dataset kurang untuk memenuhi kriteria keunikan formasi."}
+        return 0, [], {"error": "Jumlah skuad dalam dataset kurang untuk memenuhi kriteria formasi."}
         
     root = NodeBB(
         neg_ub=-ub_root,
@@ -229,12 +235,10 @@ def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: floa
         node_aktif = heapq.heappop(priority_queue)
         nodes_explored += 1
         
-        # Pruning: Jika batas atas node saat ini sudah lebih kecil atau sama dengan rating terbaik yang ditemukan
         if -node_aktif.neg_ub <= best_rating:
             nodes_pruned += 1
             continue
             
-        # Base Case: Skuad 11 pemain telah lengkap terbentuk di leaf node
         if node_aktif.level == n_slots:
             if node_aktif.rating_akumulasi > best_rating:
                 best_rating = node_aktif.rating_akumulasi
@@ -243,19 +247,16 @@ def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: floa
             
         posisi_slot, kandidat_list = slots[node_aktif.level]
         
-        # Percabangan Branching berdasarkan daftar kandidat
         count_branch = 0
         for p in kandidat_list:
             if p.nama in node_aktif.set_nama_terpakai:
                 continue
                 
-            # Constraint Budget Check
             if p.harga > node_aktif.budget_sisa:
                 nodes_pruned += 1
                 continue
                 
             count_branch += 1
-            # Batasi percabangan heuristik per tingkat demi menghindari kombinasi meledak (max 15 cabang terbaik)
             if count_branch > 15:
                 break
                 
@@ -272,7 +273,6 @@ def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: floa
             }
             next_lineup = node_aktif.tim_dipilih + [detail_pemain]
             
-            # Hitung Bound Anak Node
             ub_child = hitung_upper_bound(node_aktif.level + 1, next_rating, next_budget, slots, next_set_terpakai)
             
             if ub_child <= best_rating:
@@ -304,83 +304,59 @@ def run_branch_and_bound(df: pd.DataFrame, nama_formasi: str, budget_total: floa
 
 
 # ==============================================================================
-# 4. ENGINE VISUALISASI LAPANGAN SEPAKBOLA MODERN
+# 4. ENGINE VISUALISASI LAPANGAN SEPAKBOLA
 # ==============================================================================
 
 def gambar_stadium_formasi(best_lineup: List[Dict], nama_formasi: str):
-    """
-    Menggambar representasi visual lapangan stadion taktis 2D menggunakan Matplotlib.
-    """
     fig, ax = plt.subplots(figsize=(11, 8.5))
-    fig.patch.set_facecolor("#0f172a") # Slate Dark modern background
-    ax.set_facecolor("#15803d")        # Lapangan Hijau Estetik
+    fig.patch.set_facecolor("#0f172a") 
+    ax.set_facecolor("#15803d")        
     
-    # Pola Garis Belang Lapangan Rumput (Zebra Striping Pitch)
     for y_strip in range(0, 100, 10):
         warna_rumput = "#166534" if (y_strip // 10) % 2 == 0 else "#15803d"
         ax.axhspan(y_strip, y_strip + 10, facecolor=warna_rumput, alpha=1.0, zorder=0)
         
-    # Gambar Garis Batas Markah Lapangan Luar & Tengah
     ax.plot([0, 100, 100, 0, 0], [0, 0, 100, 100, 0], color="#f8fafc", linewidth=2.5, zorder=1)
     ax.plot([0, 100], [50, 50], color="#f8fafc", linewidth=2.5, zorder=1)
     
-    # Lingkaran Titik Tengah Lapangan
     lingkaran_tengah = plt.Circle((50, 50), 12, color="#f8fafc", fill=False, linewidth=2.5, zorder=1)
     ax.add_patch(lingkaran_tengah)
     ax.scatter(50, 50, color="#f8fafc", s=40, zorder=2)
     
-    # Kotak Penalti Sisi Atas (Gawang Lawan)
     ax.add_patch(patches.Rectangle((20, 80), 60, 20, fill=False, edgecolor="#f8fafc", linewidth=2.5, zorder=1))
     ax.add_patch(patches.Rectangle((35, 92), 30, 8, fill=False, edgecolor="#f8fafc", linewidth=1.5, zorder=1))
-    
-    # Kotak Penalti Sisi Bawah (Gawang Kita)
     ax.add_patch(patches.Rectangle((20, 0), 60, 20, fill=False, edgecolor="#f8fafc", linewidth=2.5, zorder=1))
     ax.add_patch(patches.Rectangle((35, 0), 30, 8, fill=False, edgecolor="#f8fafc", linewidth=1.5, zorder=1))
     
-    # Palet Warna Khusus untuk Setiap Peran Taktis
     skema_warna: Dict[str, str] = {
         "GK": "#38bdf8", "LB": "#fb7185", "CB": "#60a5fa", "RB": "#c084fc",
         "CDM": "#f59e0b", "CM": "#4ade80", "CAM": "#a3e635", "LW": "#f43f5e",
         "RW": "#e2e8f0", "ST": "#f43f5e"
     }
     
-    # Peta koordinat formasi terpilih
     peta_koordinat = FORMASI_POSISI[nama_formasi]
     indeks_counter: Dict[str, int] = {}
     
-    # Plotting Pemain ke Titik Lapangan
     for pemain in best_lineup:
         pos = pemain["Slot"]
         idx = indeks_counter.get(pos, 0)
         indeks_counter[pos] = idx + 1
         
-        # Validasi keamanan penarikan koordinat
         if pos in peta_koordinat and idx < len(peta_koordinat[pos]):
             x, y = peta_koordinat[pos][idx]
         else:
-            # Fallback jika terjadi anomali koordinat
             x, y = 50.0, 50.0
             
         warna_node = skema_warna.get(pos, "#94a3b8")
-        
-        # Efek Bayangan Belakang (Shadowing) untuk Kedalaman Visual
         ax.scatter(x, y - 1.2, s=2100, color="#020617", alpha=0.4, zorder=2)
-        
-        # Lingkaran Utama Penanda Pemain
         ax.scatter(x, y, s=1800, color=warna_node, edgecolors="#ffffff", linewidths=2.5, zorder=3)
         
-        # Render Informasi Teks Pemain Multi-baris agar Tidak Saling Menimpa
         nama_pendek = pemain["Nama"].split()[-1] if len(pemain["Nama"].split()) > 0 else pemain["Nama"]
         if len(nama_pendek) > 10:
             nama_pendek = nama_pendek[:9] + ".."
             
-        # Teks Nama (Tengah Lingkaran Atas)
         ax.text(x, y + 1.8, nama_pendek, ha="center", va="center", fontsize=10, color="#ffffff", weight="bold", zorder=4)
-        
-        # Teks Rating (Tengah Lingkaran Pusat)
         ax.text(x, y - 1.0, f"OVR {pemain['Rating Efektif']}", ha="center", va="center", fontsize=11, color="#0f172a", weight="black", zorder=4)
-        
-        # Teks Label Taktis Pemain (Di Bawah Lingkaran Utama)
         ax.text(x, y - 5.5, f"[{pos}]", ha="center", va="center", fontsize=9, color="#f1f5f9", weight="bold",
                 bbox=dict(facecolor="#1e293b", alpha=0.8, boxstyle="round,pad=0.2", edgecolor="none"), zorder=4)
 
@@ -400,15 +376,43 @@ st.markdown("Aplikasi penentu skuad sepak bola terbaik berbasis kecerdasan kompu
 # Panel Sidebar Input Kontrol Konten
 st.sidebar.header("⚙️ Parameter Sistem")
 formasi_terpilih = st.sidebar.selectbox("Pilih Pola Formasi Taktis:", list(FORMASI_TERSEDIA.keys()))
-budget_input_juta = st.sidebar.number_input("Batas Maksimal Anggaran Budget (Juta EUR):", min_value=10.0, max_value=5000.0, value=500.0, step=10.0)
-budget_aktual_eur = budget_input_juta * 1_000_000
 
-# Manajemen Layout Halaman Utama
 uploaded_file = st.file_uploader("Unggah File Dataset Pemain (.CSV):", type=["csv"])
 
 if uploaded_file:
     df_pemain = pd.read_csv(uploaded_file)
     
+    # 1. Bangun Slot & Hitung Batas Min/Max Budget Terlebih Dahulu
+    formasi_obj = FORMASI_TERSEDIA[formasi_terpilih]
+    slots_kandidat = bangun_kandidat_per_slot(df_pemain, formasi_obj)
+    
+    # Validasi Dasar Struktur Baris Slot
+    if len(slots_kandidat) == 11:
+        min_budget_eur, max_budget_eur = hitung_estimasi_range_budget(slots_kandidat)
+        min_budget_juta = min_budget_eur / 1_000_000
+        max_budget_juta = max_budget_eur / 1_000_000
+        
+        # 2. Tampilkan Info Range Budget di Sidebar sebagai Panduan User
+        st.sidebar.info(
+            f"📊 **Range Budget Dataset ({formasi_terpilih}):**\n"
+            f"- 🛑 **Min Budget:** €{min_budget_juta:.2f} M *(Kombinasi Skuad Termurah)*\n"
+            f"- 🚀 **Max Budget:** €{max_budget_juta:.2f} M *(Kombinasi Skuad Termahal)*"
+        )
+    else:
+        min_budget_juta = 10.0
+        max_budget_juta = 1000.0
+
+    # Input Budget Aktual dari User
+    budget_input_juta = st.sidebar.number_input(
+        "Batas Maksimal Anggaran Budget (Juta EUR):", 
+        min_value=1.0, 
+        max_value=5000.0, 
+        value=max(min_budget_juta, 150.0), # Default diarahkan ke nilai realistis atau minimalnya
+        step=10.0
+    )
+    budget_aktual_eur = budget_input_juta * 1_000_000
+
+    # Layout Utama
     col_preview, col_config_check = st.columns([2, 1])
     with col_preview:
         st.subheader("📋 Data Mentah Pemain (Sampel Dataset)")
@@ -416,9 +420,6 @@ if uploaded_file:
         
     with col_config_check:
         st.subheader("🔍 Validasi Ketersediaan Posisi")
-        formasi_obj = FORMASI_TERSEDIA[formasi_terpilih]
-        
-        # Validasi Kecukupan Anggota Pemain per Posisi sebelum Memulai Running
         is_data_aman = True
         status_list = []
         for pos_req, kuota in formasi_obj.items():
@@ -435,23 +436,25 @@ if uploaded_file:
     if not is_data_aman:
         st.error("Gagal Melanjutkan: Dataset Anda kekurangan pemain spesifik posisi untuk membentuk formasi ini.")
     else:
+        # Validasi Input Budget terhadap Batas Minimum Teoretis Dataset
+        if budget_input_juta < min_budget_juta:
+            st.warning(f"⚠️ Budget Anda (€{budget_input_juta:.2f}M) berada di bawah ambang batas minimum teoretis (€{min_budget_juta:.2f}M). Kemungkinan besar solusi tidak akan ditemukan.")
+
         if st.button("🚀 Jalankan Optimasi Pencarian Starting XI Terbaik"):
             with st.spinner("Algoritma sedang mengeksplorasi pohon ruang status (Branch and Bound)..."):
-                total_rating, lineup_final, stats = run_branch_and_bound(df_pemain, formasi_terpilih, budget_aktual_eur)
+                total_rating, lineup_final, stats = run_branch_and_bound(slots_kandidat, budget_aktual_eur)
                 
             if "error" in stats:
                 st.error(stats["error"])
             elif not lineup_final:
-                st.error("Solusi Tidak Ditemukan! Batasan budget terlalu ketat untuk membeli 11 pemain posisi tersebut.")
+                st.error(f"Solusi Tidak Ditemukan! Budget €{budget_input_juta:.2f}M terlalu rendah untuk membeli kombinasi 11 pemain unik yang valid.")
             else:
                 st.success("Solusi Optimal Berhasil Ditemukan!")
                 
-                # Mengubah output list ke representasi tabel dataframe komersial
                 df_lineup = pd.DataFrame(lineup_final)
                 df_lineup["Harga (Juta EUR)"] = df_lineup["Harga EUR"] / 1_000_000
                 df_lineup_display = df_lineup[["Slot", "Nama", "Posisi Asli", "Rating Efektif", "Harga (Juta EUR)"]]
                 
-                # Informasi Ringkasan Finansial Tim
                 total_pengeluaran_juta = df_lineup["Harga (Juta EUR)"].sum()
                 sisa_budget_juta = budget_input_juta - total_pengeluaran_juta
                 
@@ -472,4 +475,4 @@ if uploaded_file:
                     st.subheader("🏟️ Penempatan Posisi Taktis Lapangan Stadion")
                     gambar_stadium_formasi(lineup_final, formasi_terpilih)
 else:
-    st.info("💡 Silakan unggah dataset pemain sepak bola berformat .CSV untuk memulai sistem optimasi.")
+    st.info("💡 Silakan unggah dataset pemain sepak bola berformat .CSV")
