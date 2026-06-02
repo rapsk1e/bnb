@@ -21,30 +21,26 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 1. KONFIGURASI FORMASI, KOMPATIBILITAS & KOORDINAT LAPANGAN (UPDATED)
+# 1. KONFIGURASI FORMASI, KOMPATIBILITAS & KOORDINAT LAPANGAN
 # ==============================================================================
 
 # Definisikan Formasi Utama (Total Kuota per Formasi Selalu Tepat 11 Slot)
 FORMASI_TERSEDIA: Dict[str, Dict[str, int]] = {
     "4-3-3": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 1, "CM": 2, "LW": 1, "RW": 1, "ST": 1},
     "4-4-2": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 1, "CM": 3, "ST": 2},
-    # 4-2-3-1: 1 GK, 4 Bek (LB, 2 CB, RB), 2 Midfield (CDM), 1 CAM, 1 LM, 1 RM, 1 ST = 11 Slot
-    "4-2-3-1": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 2, "CAM": 1, "LM": 1, "RM": 1, "ST": 1},
-    # 3-5-2: 1 GK, 3 CB, 1 CDM, 3 CM, 1 CAM, 2 ST = 11 Slot (Sesuai modifikasi data sentral Anda)
-    "3-5-2": {"GK": 1, "CB": 3, "CDM": 1, "CM": 3, "CAM": 1, "ST": 2},
+    "4-2-3-1": {"GK": 1, "LB": 1, "CB": 2, "RB": 1, "CDM": 2, "CAM": 2, "LW": 1, "ST": 1},
+    "3-5-2": {"GK": 1, "CB": 3, "CDM": 1, "CM": 2, "CAM": 1, "RB": 1, "ST": 2},
 }
 
 # Aturan Kompatibilitas Posisi Alternatif beserta Penalti Ratingnya
 ATURAN_KOMPATIBILITAS: Dict[str, List[Tuple[str, int]]] = {
     "GK": [("GK", 0)],
     "CB": [("CB", 0)],
-    "LB": [("LB", 0), ("RB", -5), ("LWB", 0)],
-    "RB": [("RB", 0), ("LB", -5), ("RWB", 0)],
+    "LB": [("LB", 0), ("RB", -5)],
+    "RB": [("RB", 0), ("LB", -5)],
     "CDM": [("CDM", 0), ("CM", 0)],
     "CM": [("CM", 0), ("CDM", 0), ("CAM", 0)],
     "CAM": [("CAM", 0), ("CM", 0), ("ST", -10)],
-    "LM": [("LM", 0), ("LW", -3), ("LB", -5)],  # Kompatibilitas Gelandang Kiri
-    "RM": [("RM", 0), ("RW", -3), ("RB", -5)],  # Kompatibilitas Gelandang Kanan
     "LW": [("LW", 0), ("RW", -5)],
     "RW": [("RW", 0), ("LW", -5)],
     "ST": [("ST", 0)]
@@ -53,33 +49,46 @@ ATURAN_KOMPATIBILITAS: Dict[str, List[Tuple[str, int]]] = {
 # Koordinat Spasial Unik Lapangan (X: 0-100, Y: 0-100) untuk Mencegah Pemain Bertumpuk
 FORMASI_POSISI: Dict[str, Dict[str, List[Tuple[float, float]]]] = {
     "4-3-3": {
-        "GK": [(50.0, 8.0)], "LB": [(15.0, 26.0)], "CB": [(38.0, 23.0), (62.0, 23.0)], "RB": [(85.0, 26.0)],
-        "CDM": [(50.0, 42.0)], "CM": [(33.0, 56.0), (67.0, 56.0)], "LW": [(20.0, 80.0)], "RW": [(80.0, 80.0)], "ST": [(50.0, 88.0)]
+        "GK": [(50.0, 8.0)],
+        "LB": [(15.0, 26.0)],
+        "CB": [(38.0, 23.0), (62.0, 23.0)],
+        "RB": [(85.0, 26.0)],
+        "CDM": [(50.0, 42.0)],
+        "CM": [(33.0, 56.0), (67.0, 56.0)],
+        "LW": [(20.0, 80.0)],
+        "RW": [(80.0, 80.0)],
+        "ST": [(50.0, 88.0)]
     },
     "4-4-2": {
-        "GK": [(50.0, 8.0)], "LB": [(15.0, 26.0)], "CB": [(38.0, 23.0), (62.0, 23.0)], "RB": [(85.0, 26.0)],
-        "CM": [(25.0, 54.0), (50.0, 58.0), (75.0, 54.0)], "CDM": [(50.0, 40.0)], "ST": [(35.0, 86.0), (65.0, 86.0)]
+        "GK": [(50.0, 8.0)],
+        "LB": [(15.0, 26.0)],
+        "CB": [(38.0, 23.0), (62.0, 23.0)],
+        "RB": [(85.0, 26.0)],
+        "CM": [(25.0, 54.0), (50.0, 58.0), (75.0, 54.0)],
+        "CDM": [(50.0, 40.0)],
+        "ST": [(35.0, 86.0), (65.0, 86.0)]
     },
     "4-2-3-1": {
         "GK": [(50.0, 8.0)],
         "LB": [(15.0, 26.0)],
         "CB": [(38.0, 23.0), (62.0, 23.0)],
         "RB": [(85.0, 26.0)],
-        "CDM": [(35.0, 44.0), (65.0, 44.0)], # 2 Midfield (CDM)
-        "CAM": [(50.0, 68.0)],               # 1 CAM
-        "LM": [(18.0, 68.0)],                # 1 LM
-        "RM": [(82.0, 68.0)],                # 1 RM
-        "ST": [(50.0, 88.0)]                 # 1 ST
+        "CDM": [(35.0, 44.0), (65.0, 44.0)],
+        "CAM": [(35.0, 66.0), (65.0, 66.0)],
+        "LW": [(18.0, 80.0)],
+        "ST": [(50.0, 88.0)]
     },
     "3-5-2": {
         "GK": [(50.0, 8.0)],
-        "CB": [(25.0, 23.0), (50.0, 23.0), (75.0, 23.0)], # 3 CB
-        "CDM": [(50.0, 42.0)],                             # 1 CDM
-        "CM": [(25.0, 58.0), (50.0, 58.0), (75.0, 58.0)], # 3 CM (Kiri, Tengah, Kanan)
-        "CAM": [(50.0, 72.0)],                             # 1 CAM
-        "ST": [(35.0, 88.0), (65.0, 88.0)]                 # 2 ST
+        "CB": [(25.0, 23.0), (50.0, 23.0), (75.0, 23.0)],
+        "CDM": [(50.0, 42.0)],
+        "CM": [(30.0, 58.0), (70.0, 58.0)],
+        "CAM": [(50.0, 68.0)],
+        "RB": [(85.0, 48.0)],
+        "ST": [(35.0, 88.0), (65.0, 88.0)]
     }
 }
+
 
 # ==============================================================================
 # 2. STRUKTUR DATA & ENGINE DATA PRE-PROCESSING
@@ -103,6 +112,7 @@ def bangun_kandidat_per_slot(df: pd.DataFrame, formasi: Dict[str, int]) -> List[
             sub_df = df[df["Position"] == pos_asli].copy()
             for _, row in sub_df.iterrows():
                 rating_ef = int(row["Overall"] + penalti)
+    
                 list_pemain_kompatibel.append(
                     KandidatPemain(
                         nama=str(row["Name"]),
@@ -120,15 +130,11 @@ def bangun_kandidat_per_slot(df: pd.DataFrame, formasi: Dict[str, int]) -> List[
     return slots_kandidat
 
 def hitung_estimasi_range_budget(slots: List[Tuple[str, List[KandidatPemain]]]) -> Tuple[float, float]:
-    """
-    Menghitung perkiraan kasar budget minimum dan maksimum berdasarkan ketersediaan pemain unik.
-    """
     min_total = 0.0
     max_total = 0.0
     set_terpakai_min = set()
     set_terpakai_max = set()
     
-    # Hitung Minimum Budget (mengambil pemain termurah yang unik)
     for _, kandidat_list in slots:
         kandidat_urut_murah = sorted(kandidat_list, key=lambda x: x.harga)
         terpilih = False
@@ -138,10 +144,9 @@ def hitung_estimasi_range_budget(slots: List[Tuple[str, List[KandidatPemain]]]) 
                 set_terpakai_min.add(p.nama)
                 terpilih = True
                 break
-        if not terpilih and kandidat_list:  # Fallback jika keunikan habis
+        if not terpilih and kandidat_list:
             min_total += kandidat_list[-1].harga
 
-    # Hitung Maksimum Budget (mengambil pemain termahal yang unik)
     for _, kandidat_list in slots:
         kandidat_urut_mahal = sorted(kandidat_list, key=lambda x: x.harga, reverse=True)
         terpilih = False
@@ -158,7 +163,7 @@ def hitung_estimasi_range_budget(slots: List[Tuple[str, List[KandidatPemain]]]) 
 
 
 # ==============================================================================
-# 3. ALGORITMA BRANCH AND BOUND (TEROPTIMASI)
+# 3. ALGORITMA BRANCH AND BOUND (TEROPTIMASI + LOGGING TREE)
 # ==============================================================================
 
 @dataclass(order=True)
@@ -169,6 +174,9 @@ class NodeBB:
     budget_sisa: float = field(compare=False)
     tim_dipilih: list = field(compare=False)
     set_nama_terpakai: frozenset = field(compare=False)
+    node_id: int = field(default=0, compare=False)
+    parent_id: int = field(default=-1, compare=False)
+    nama_cabang: str = field(default="Root", compare=False)
 
 def hitung_upper_bound(level: int, rating_kini: int, sisa_budget: float, 
                        slots: List[Tuple[str, List[KandidatPemain]]], 
@@ -198,18 +206,22 @@ def hitung_upper_bound(level: int, rating_kini: int, sisa_budget: float,
             
     return ub
 
-def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_total: float) -> Tuple[int, List[Dict], Dict]:
+def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_total: float, max_tree_nodes: int = 25) -> Tuple[int, List[Dict], Dict, List[Dict]]:
     n_slots = len(slots)
     best_rating = -1
     best_lineup: List[Dict] = []
     
     nodes_explored = 0
     nodes_pruned = 0
+    node_counter = 0
     waktu_mulai = time.time()
+    
+    # List untuk menampung struktur data pohon untuk visualisasi Graphviz
+    tree_log: List[Dict] = []
     
     ub_root = hitung_upper_bound(0, 0, budget_total, slots, frozenset())
     if ub_root == float('-inf'):
-        return 0, [], {"error": "Jumlah skuad dalam dataset kurang untuk memenuhi kriteria formasi."}
+        return 0, [], {"error": "Jumlah skuad dalam dataset kurang."}, []
         
     root = NodeBB(
         neg_ub=-ub_root,
@@ -217,23 +229,44 @@ def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_t
         rating_akumulasi=0,
         budget_sisa=budget_total,
         tim_dipilih=[],
-        set_nama_terpakai=frozenset()
+        set_nama_terpakai=frozenset(),
+        node_id=node_counter,
+        parent_id=-1,
+        nama_cabang="Start"
     )
     
     priority_queue = [root]
+    
+    # Log node akar ke tree visualizer
+    if len(tree_log) < max_tree_nodes:
+        tree_log.append({
+            "id": root.node_id, "parent": root.parent_id, "label": root.nama_cabang,
+            "ub": ub_root, "status": "Explored", "level": root.level
+        })
     
     while priority_queue:
         node_aktif = heapq.heappop(priority_queue)
         nodes_explored += 1
         
+        # Cari node ini di log dan perbarui statusnya jika dia dieksplorasi penuh
+        for node_data in tree_log:
+            if node_data["id"] == node_aktif.node_id:
+                node_data["status"] = "Explored"
+        
         if -node_aktif.neg_ub <= best_rating:
             nodes_pruned += 1
+            for node_data in tree_log:
+                if node_data["id"] == node_aktif.node_id:
+                    node_data["status"] = "Pruned (UB)"
             continue
             
         if node_aktif.level == n_slots:
             if node_aktif.rating_akumulasi > best_rating:
                 best_rating = node_aktif.rating_akumulasi
                 best_lineup = node_aktif.tim_dipilih
+                for node_data in tree_log:
+                    if node_data["id"] == node_aktif.node_id:
+                        node_data["status"] = "Best Sol"
             continue
             
         posisi_slot, kandidat_list = slots[node_aktif.level]
@@ -243,12 +276,21 @@ def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_t
             if p.nama in node_aktif.set_nama_terpakai:
                 continue
                 
+            node_counter += 1
+            nama_singkat_pemain = p.nama.split()[-1] if len(p.nama.split()) > 0 else p.nama
+            label_cabang = f"{posisi_slot}\n{nama_singkat_pemain}"
+            
             if p.harga > node_aktif.budget_sisa:
                 nodes_pruned += 1
+                if len(tree_log) < max_tree_nodes:
+                    tree_log.append({
+                        "id": node_counter, "parent": node_aktif.node_id, "label": label_cabang,
+                        "ub": 0, "status": "Pruned (Budget)", "level": node_aktif.level + 1
+                    })
                 continue
                 
             count_branch += 1
-            if count_branch > 15:
+            if count_branch > 15: # Batasi branching factor agar bnb tidak meledak
                 break
                 
             next_set_terpakai = node_aktif.set_nama_terpakai | {p.nama}
@@ -256,11 +298,8 @@ def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_t
             next_budget = node_aktif.budget_sisa - p.harga
             
             detail_pemain = {
-                "Slot": posisi_slot,
-                "Nama": p.nama,
-                "Posisi Asli": p.posisi_asli,
-                "Rating Efektif": p.rating_efektif,
-                "Harga EUR": p.harga
+                "Slot": posisi_slot, "Nama": p.nama, "Posisi Asli": p.posisi_asli,
+                "Rating Efektif": p.rating_efektif, "Harga EUR": p.harga
             }
             next_lineup = node_aktif.tim_dipilih + [detail_pemain]
             
@@ -268,16 +307,25 @@ def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_t
             
             if ub_child <= best_rating:
                 nodes_pruned += 1
+                if len(tree_log) < max_tree_nodes:
+                    tree_log.append({
+                        "id": node_counter, "parent": node_aktif.node_id, "label": label_cabang,
+                        "ub": ub_child, "status": "Pruned (UB)", "level": node_aktif.level + 1
+                    })
                 continue
                 
             child_node = NodeBB(
-                neg_ub=-ub_child,
-                level=node_aktif.level + 1,
-                rating_akumulasi=next_rating,
-                budget_sisa=next_budget,
-                tim_dipilih=next_lineup,
-                set_nama_terpakai=next_set_terpakai
+                neg_ub=-ub_child, level=node_aktif.level + 1, rating_akumulasi=next_rating,
+                budget_sisa=next_budget, tim_dipilih=next_lineup, set_nama_terpakai=next_set_terpakai,
+                node_id=node_counter, parent_id=node_aktif.node_id, nama_cabang=label_cabang
             )
+            
+            if len(tree_log) < max_tree_nodes:
+                tree_log.append({
+                    "id": child_node.node_id, "parent": child_node.parent_id, "label": child_node.nama_cabang,
+                    "ub": ub_child, "status": "In Queue", "level": child_node.level
+                })
+                
             heapq.heappush(priority_queue, child_node)
             
     waktu_eksekusi = time.time() - waktu_mulai
@@ -291,7 +339,43 @@ def run_branch_and_bound(slots: List[Tuple[str, List[KandidatPemain]]], budget_t
         "efisiensi_pruning": f"{efisiensi:.2f}%"
     }
     
-    return best_rating, best_lineup, statistik
+    return best_rating, best_lineup, statistik, tree_log
+
+
+def buat_grafik_graphviz(tree_log: List[Dict]) -> str:
+    """Mengubah log bnb node menjadi string DOT format untuk dibaca Graphviz."""
+    dot = "digraph G {\n"
+    dot += "  bgcolor=\"#0f172a\";\n"
+    dot += "  edge [color=\"#94a3b8\", arrowhead=vee, arrowsize=0.6];\n"
+    dot += "  node [fontname=\"sans-serif\", fontsize=10, shape=box, style=\"filled,rounded\", width=1.2, height=0.6];\n"
+    
+    for node in tree_log:
+        lbl = f"{node['label']}\nUB: {node['ub']:.1f}" if node['ub'] > 0 else node['label']
+        
+        # Pewarnaan dinamis berdasarkan status pruning/eksplorasi
+        if node["status"] == "Explored":
+            fillcolor = "#1e3a8a" # Biru Tua
+            fontcolor = "#ffffff"
+        elif node["status"] == "Best Sol":
+            fillcolor = "#16a34a" # Hijau Sukses
+            fontcolor = "#ffffff"
+        elif "Pruned (UB)" in node["status"]:
+            fillcolor = "#7f1d1d" # Merah Marun (Pruned rating jelek)
+            fontcolor = "#fca5a5"
+        elif "Pruned (Budget)" in node["status"]:
+            fillcolor = "#b45309" # Jingga Tua (Pruned overbudget)
+            fontcolor = "#fef3c7"
+        else:
+            fillcolor = "#334155" # Abu-abu antrean
+            fontcolor = "#cbd5e1"
+            
+        dot += f'  {node["id"]} [label="{lbl}", fillcolor="{fillcolor}", fontcolor="{fontcolor}", color=\"#ffffff\", linewidth=0.5];\n'
+        
+        if node["parent"] != -1:
+            dot += f'  {node["parent"]} -> {node["id"]};\n'
+            
+    dot += "}"
+    return dot
 
 
 # ==============================================================================
@@ -322,8 +406,7 @@ def gambar_stadium_formasi(best_lineup: List[Dict], nama_formasi: str):
     skema_warna: Dict[str, str] = {
         "GK": "#38bdf8", "LB": "#fb7185", "CB": "#60a5fa", "RB": "#c084fc",
         "CDM": "#f59e0b", "CM": "#4ade80", "CAM": "#a3e635", "LW": "#f43f5e",
-        "RW": "#e2e8f0", "ST": "#f43f5e",
-        "LM": "#f43f5e", "RM": "#e2e8f0"  # Menambahkan skema warna untuk LM dan RM
+        "RW": "#e2e8f0", "ST": "#f43f5e"
     }
     
     peta_koordinat = FORMASI_POSISI[nama_formasi]
@@ -374,16 +457,12 @@ uploaded_file = st.file_uploader("Unggah File Dataset Pemain (.CSV):", type=["cs
 if uploaded_file:
     df_pemain = pd.read_csv(uploaded_file)
     
-    # --------------------------------------------------------------------------
-    # FITUR ANALISIS KELAYAKAN FINANSIAL & KUOTA SEMUA FORMASI
-    # --------------------------------------------------------------------------
     st.subheader("📊 Analisis Kelayakan & Rentang Budget Dataset Semesta Formasi")
     
     ringkasan_formasi = []
     for f_nama, f_obj in FORMASI_TERSEDIA.items():
         slots_temp = bangun_kandidat_per_slot(df_pemain, f_obj)
         
-        # Validasi kecukupan pemain di dataset
         is_aman = True
         for pos_req, kuota in f_obj.items():
             pos_alternatif = [p_asli for p_asli, _ in ATURAN_KOMPATIBILITAS.get(pos_req, [(pos_req, 0)])]
@@ -411,11 +490,9 @@ if uploaded_file:
     st.dataframe(df_ringkasan, use_container_width=True, hide_index=True)
     st.caption("ℹ️ *Min Budget menunjukkan ongkos minimum membangun tim isi 11 pemain unik yang valid, sedangkan Max Budget adalah total harga jika Anda memborong semua opsi pemain termahal.*")
     
-    # --- Kembali ke Inisialisasi Formasi Aktif Pilihan User ---
     formasi_obj = FORMASI_TERSEDIA[formasi_terpilih]
     slots_kandidat = bangun_kandidat_per_slot(df_pemain, formasi_obj)
     
-    # Ambil batas min/max khusus untuk formasi aktif di sidebar
     if len(slots_kandidat) == 11:
         min_budget_eur, max_budget_eur = hitung_estimasi_range_budget(slots_kandidat)
         min_budget_juta = min_budget_eur / 1_000_000
@@ -430,17 +507,12 @@ if uploaded_file:
         min_budget_juta = 1.0
         max_budget_juta = 2000.0
 
-    # Input Budget Aktual dari User
     budget_input_juta = st.sidebar.number_input(
         "Batas Maksimal Anggaran Budget Anda (Juta EUR):", 
-        min_value=1.0, 
-        max_value=5000.0, 
-        value=max(min_budget_juta, 150.0),
-        step=10.0
+        min_value=1.0, max_value=5000.0, value=max(min_budget_juta, 150.0), step=10.0
     )
     budget_aktual_eur = budget_input_juta * 1_000_000
 
-    # Layout Utama Tampilan Pratinjau Data Mentah & Status Posisi Formasi Terpilih
     st.markdown("---")
     col_preview, col_config_check = st.columns([1.8, 1.2])
     with col_preview:
@@ -465,20 +537,19 @@ if uploaded_file:
     if not is_data_aman:
         st.error(f"Gagal Melanjutkan: Dataset Anda tidak memiliki cukup pemain untuk formasi {formasi_terpilih}.")
     else:
-        # Peringatan Validasi Interaktif Budget Input
         if budget_input_juta < min_budget_juta:
-            st.warning(f"⚠️ Budget Anda (€{budget_input_juta:.2f}M) di bawah batas minimum teoretis (€{min_budget_juta:.2f}M) untuk formasi ini. Branch & Bound dipastikan mengembalikan hasil nihil (solusi tidak ketemu).")
+            st.warning(f"⚠️ Budget Anda (€{budget_input_juta:.2f}M) di bawah batas minimum teoretis (€{min_budget_juta:.2f}M) untuk formasi ini. B&B dipastikan mengembalikan hasil nihil.")
         elif budget_input_juta >= max_budget_juta:
-            st.success(f"⚡ Budget Anda (€{budget_input_juta:.2f}M) melampaui harga skuad termahal (€{max_budget_juta:.2f}M). Algoritma akan otomatis mengambil sebelas bintang dengan rating tertinggi tanpa batasan dana!")
+            st.success(f"⚡ Budget Anda (€{budget_input_juta:.2f}M) melampaui harga skuad termahal. Algoritma otomatis mengambil pemain rating tertinggi!")
 
         if st.button("🚀 Jalankan Optimasi Pencarian Starting XI Terbaik"):
             with st.spinner("Algoritma sedang mengeksplorasi pohon ruang status (Branch and Bound)..."):
-                total_rating, lineup_final, stats = run_branch_and_bound(slots_kandidat, budget_aktual_eur)
+                total_rating, lineup_final, stats, bnb_tree_data = run_branch_and_bound(slots_kandidat, budget_aktual_eur, max_tree_nodes=30)
                 
             if "error" in stats:
                 st.error(stats["error"])
             elif not lineup_final:
-                st.error(f"Solusi Tidak Ditemukan! Batas Anggaran €{budget_input_juta:.2f}M terlalu rendah untuk membeli kombinasi 11 pemain unik yang valid.")
+                st.error(f"Solusi Tidak Ditemukan! Batas Anggaran €{budget_input_juta:.2f}M terlalu rendah.")
             else:
                 st.success("Solusi Optimal Berhasil Diekstrak!")
                 
@@ -494,15 +565,41 @@ if uploaded_file:
                 m2.metric("Total Investasi Skuad (EUR)", f"€{total_pengeluaran_juta:.2f} M")
                 m3.metric("Sisa Alokasi Dana Budget", f"€{sisa_budget_juta:.2f} M")
                 
-                col_tabel, col_lapangan = st.columns([1, 1.2])
-                with col_tabel:
-                    st.subheader("📋 Daftar Sebelas Pemain Utama")
-                    st.dataframe(df_lineup_display, use_container_width=True, height=440)
-                    st.subheader("📊 Statistik Kinerja Pemangkasan Node")
-                    st.json(stats)
-                    
-                with col_lapangan:
+                st.markdown("---")
+                
+                # --- STRATEGI TAB UNTUK MEMISAHKAN VISUALISASI AGAR RAPI ---
+                tab_lapangan, tab_tabel, tab_pohon = st.tabs([
+                    "🏟️ Penempatan Lapangan", 
+                    "📋 Daftar Pemain Utama", 
+                    "🌳 Pohon Keputusan Branch & Bound"
+                ])
+                
+                with tab_lapangan:
                     st.subheader("🏟️ Penempatan Posisi Taktis Lapangan Stadion")
                     gambar_stadium_formasi(lineup_final, formasi_terpilih)
+                    
+                with tab_tabel:
+                    col_l, col_r = st.columns([1.2, 0.8])
+                    with col_l:
+                        st.subheader("📋 Daftar Sebelas Pemain Utama")
+                        st.dataframe(df_lineup_display, use_container_width=True, height=440)
+                    with col_r:
+                        st.subheader("📊 Statistik Kinerja Pemangkasan Node")
+                        st.json(stats)
+                        
+                with tab_pohon:
+                    st.subheader("🌳 Struktur Pemangkasan Node Pohon Status (30 Node Pertama)")
+                    st.markdown("""
+                    **Legenda Warna Node:**
+                    * 🔵 **Biru**: Node yang dieksplorasi penuh (*Explored*)
+                    * 🟢 **Hijau**: Node yang menghasilkan Solusi Terbaik Sementara (*Best Solution*)
+                    * 🔴 **Merah**: Cabang dipangkas karena tak akan melampaui rating terbaik (*Pruned by Bound*)
+                    * 🟤 **Cokelat**: Cabang dipangkas karena melampaui sisa budget (*Pruned by Budget*)
+                    * ⚪ **Abu-abu**: Node mengantre di dalam *Priority Queue*
+                    """)
+                    
+                    # Bangun dan render graphviz string
+                    dot_string = buat_grafik_graphviz(bnb_tree_data)
+                    st.graphviz_chart(dot_string, use_container_width=True)
 else:
     st.info("💡 Silakan unggah dataset pemain sepak bola berformat .CSV")
