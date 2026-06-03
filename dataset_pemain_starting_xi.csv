@@ -1,0 +1,79 @@
+Name,Age,Club,Position,Overall,Value_EUR,Wage_EUR
+Kylian Mbappe,25,Real Madrid,ST,91,180000000,350000
+Erling Haaland,23,Manchester City,ST,91,175000000,340000
+Harry Kane,30,Bayern Munich,ST,90,110000000,280000
+Lautaro Martinez,26,Inter Milan,ST,89,130000000,240000
+Robert Lewandowski,35,Barcelona,ST,88,50000000,210000
+Victor Osimhen,25,Galatasaray,ST,87,100000000,190000
+Alexander Isak,24,Newcastle United,ST,85,75000000,140000
+Ollie Watkins,28,Aston Villa,ST,84,55000000,120000
+Viktor Gyokeres,25,Sporting CP,ST,84,58000000,110000
+Dusan Vlahovic,24,Juventus,ST,83,48000000,105000
+Vinicius Junior,23,Real Madrid,LW,90,145000000,320000
+Rafael Leao,24,AC Milan,LW,86,92000000,160000
+Nico Williams,21,Athletic Bilbao,LW,85,78000000,65000
+Khvicha Kvaratskhelia,23,Napoli,LW,85,76000000,95000
+Luis Diaz,27,Liverpool,LW,84,52000000,140000
+Gabriel Martinelli,22,Arsenal,LW,83,48000000,110000
+Anthony Gordon,23,Newcastle United,LW,82,44000000,95000
+Bukayo Saka,22,Arsenal,RW,87,115000000,165000
+Rodrygo,23,Real Madrid,RW,86,95000000,210000
+Ousmane Dembele,27,PSG,RW,86,80000000,150000
+Lamine Yamal,16,Barcelona,RW,84,72000000,35000
+Michael Olise,22,Bayern Munich,RW,83,52000000,95000
+Takefusa Kubo,23,Real Sociedad,RW,83,49000000,45000
+Cole Palmer,22,Chelsea,RW,82,48000000,95000
+Jude Bellingham,20,Real Madrid,CAM,90,170000000,310000
+Florian Wirtz,21,Bayer Leverkusen,CAM,88,125000000,140000
+Jamal Musiala,21,Bayern Munich,CAM,87,110000000,130000
+Martin Odegaard,25,Arsenal,CAM,86,90000000,180000
+Bruno Fernandes,29,Manchester United,CAM,86,75000000,220000
+James Madison,27,Tottenham Hotspur,CAM,84,48000000,135000
+Federico Valverde,25,Real Madrid,CM,88,115000000,270000
+Kevin De Bruyne,32,Manchester City,CM,88,65000000,300000
+Bernardo Silva,29,Manchester City,CM,87,75000000,250000
+Nicolo Barella,27,Inter Milan,CM,86,80000000,165000
+Alexis Mac Allister,25,Liverpool,CM,85,78000000,150000
+Pedri,21,Barcelona,CM,85,82000000,115000
+Frenkie de Jong,27,Barcelona,CM,85,60000000,180000
+Eduardo Camavinga,21,Real Madrid,CM,84,64000000,120000
+Gavi,19,Barcelona,CM,83,55000000,85000
+Warren Zaire-Emery,18,PSG,CM,81,44000000,45000
+Rodri,27,Manchester City,CDM,91,160000000,320000
+Declan Rice,25,Arsenal,CDM,87,105000000,160000
+Aurelien Tchouameni,24,Real Madrid,CDM,85,75000000,140000
+Joao Palhinha,28,Bayern Munich,CDM,84,48000000,120000
+Hakan Calhanoglu,30,Inter Milan,CDM,84,40000000,130000
+Bruno Guimaraes,26,Newcastle United,CDM,84,51000000,140000
+Martin Zubimendi,25,Real Sociedad,CDM,83,46000000,65000
+Granit Xhaka,31,Bayer Leverkusen,CDM,83,28000000,105000
+Ruben Dias,27,Manchester City,CB,90,140000000,280000
+William Saliba,23,Arsenal,CB,88,120000000,140000
+Virgil van Dijk,32,Liverpool,CB,88,55000000,220000
+Antonio Rudiger,31,Real Madrid,CB,87,60000000,190000
+Alessandro Bastoni,25,Inter Milan,CB,87,90000000,140000
+Gabriel Magalhaes,26,Arsenal,CB,86,72000000,135000
+Ronald Araujo,25,Barcelona,CB,85,71000000,125000
+Gleison Bremer,27,Juventus,CB,85,62000000,120000
+Eder Militao,26,Real Madrid,CB,85,65000000,140000
+Nico Schlotterbeck,24,Borussia Dortmund,CB,84,52000000,85000
+Minjae Kim,27,Bayern Munich,CB,83,38000000,110000
+Micky van de Ven,23,Tottenham Hotspur,CB,83,55000000,90000
+Theo Hernandez,26,AC Milan,LB,87,85000000,140000
+Federico Dimarco,26,Inter Milan,LB,84,46000000,115000
+Nuno Mendes,21,PSG,LB,83,51000000,80000
+Ferland Mendy,29,Real Madrid,LB,82,28000000,135000
+Alejandro Grimaldo,28,Bayer Leverkusen,LB,84,44000000,100000
+Josko Gvardiol,22,Manchester City,LB,83,53000000,120000
+Jeremie Frimpong,23,Bayer Leverkusen,RB,84,54000000,90000
+Achraf Hakimi,25,PSG,RB,84,45000000,110000
+Trent Alexander-Arnold,25,Liverpool,RB,86,73000000,150000
+Dani Carvajal,32,Real Madrid,RB,86,42000000,180000
+Pedro Porro,24,Tottenham Hotspur,RB,83,43500000,90000
+Ben White,26,Arsenal,RB,82,32500000,105000
+Alisson Becker,31,Liverpool,GK,89,65000000,190000
+Thibaut Courtois,32,Real Madrid,GK,89,62000000,220000
+Marc-Andre ter Stegen,32,Barcelona,GK,89,58000000,180000
+Gianluigi Donnarumma,25,PSG,GK,89,88000000,130000
+Gregor Kobel,26,Borussia Dortmund,GK,88,72000000,95000
+Ederson,30,Manchester City,GK,86,40000000,180000
